@@ -1,3 +1,8 @@
+>[!WARNING]
+>Work in progress...<br>
+>Still setting up the repo properly!<br>
+>Use at your own risk!
+
 # Void Desktop Build Scripts
 
 ![Screenshot](media/main.png)
