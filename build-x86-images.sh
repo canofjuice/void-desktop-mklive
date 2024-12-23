@@ -20,8 +20,7 @@ usage() {
 
 	OPTIONS
 	 -a <arch>     Set XBPS_ARCH in the image
-	 -b <variant>  One of base, enlightenment, xfce, mate, cinnamon, gnome, kde,
-	               lxde, or lxqt (default: base). May be specified multiple times
+	 -b <variant>  void-desktop-lite, void-desktop-full. May be specified multiple times
 	               to build multiple variants
 	 -d <date>     Override the datestamp on the generated image (YYYYMMDD format)
 	 -t <arch-date-variant>
@@ -49,11 +48,15 @@ esac
 done
 shift $((OPTIND - 1))
 
-INCLUDEDIR=$(mktemp -d)
+INCLUDEDIR=include
 trap "cleanup" INT TERM
 
 cleanup() {
-    rm -rf "$INCLUDEDIR"
+    rm -rf "$INCLUDEDIR"/usr/bin/void-installer
+    rm -rf "$INCLUDEDIR"/etc/alsa
+    rm -rf "$INCLUDEDIR"/etc/pipewire
+    rm -rf "$INCLUDEDIR"/etc/xdg/autostart/pipewire.desktop
+    echo "penis blast!! :3"
 }
 
 setup_pipewire() {
@@ -74,52 +77,33 @@ build_variant() {
     IMG=void-live-${ARCH}-${DATE}-${variant}.iso
     GRUB_PKGS="grub-i386-efi grub-x86_64-efi"
     A11Y_PKGS="espeakup void-live-audio brltty"
-    PKGS="dialog cryptsetup lvm2 mdadm void-docs-browse xtools-minimal xmirror chrony tmux $A11Y_PKGS $GRUB_PKGS"
-    XORG_PKGS="xorg-minimal xorg-input-drivers xorg-video-drivers setxkbmap xauth font-misc-misc terminus-font dejavu-fonts-ttf orca"
-    SERVICES="sshd chronyd"
+    PKGS="dialog cryptsetup lvm2 smartmontools mdadm void-docs-browse xtools-minimal xmirror void-repo-nonfree void-repo-multilib void-repo-multilib-nonfree chrony 7zip xz unzip unrar wget nano dosfstools ntfs-3g exfatprogs ufw tlp $A11Y_PKGS $GRUB_PKGS"
+    XORG_PKGS="xorg-minimal xorg-input-drivers xorg-video-drivers setxkbmap xauth font-misc-misc terminus-font dejavu-fonts-ttf noto-fonts-ttf noto-fonts-cjk noto-fonts-emoji noto-fonts-ttf-extra cantarell-fonts gparted gnome-disk-utility onboard orca"
+    SERVICES="sshd chronyd ufw tlp"
 
     LIGHTDM_SESSION=''
 
     case $variant in
-        base)
-            SERVICES="$SERVICES dhcpcd wpa_supplicant acpid"
-        ;;
-        enlightenment)
-            PKGS="$PKGS $XORG_PKGS lightdm lightdm-gtk3-greeter enlightenment terminology udisks2 firefox"
-            SERVICES="$SERVICES acpid dhcpcd wpa_supplicant lightdm dbus polkitd"
-            LIGHTDM_SESSION=enlightenment
-        ;;
-        xfce)
-            PKGS="$PKGS $XORG_PKGS lightdm lightdm-gtk3-greeter xfce4 gnome-themes-standard gnome-keyring network-manager-applet gvfs-afc gvfs-mtp gvfs-smb udisks2 firefox xfce4-pulseaudio-plugin"
-            SERVICES="$SERVICES dbus lightdm NetworkManager polkitd"
+#        base)
+#            SERVICES="$SERVICES dhcpcd wpa_supplicant acpid"
+#        ;;
+        void-desktop-base)
+            PKGS="$PKGS $XORG_PKGS lightdm lightdm-gtk3-greeter xfce4 gnome-themes-standard xcursor-vanilla-dmz gnome-keyring network-manager-applet gvfs-afc gvfs-mtp gvfs-smb udisks2 firefox xfce4-screenshooter greybird-themes galculator pavucontrol xfce4-pulseaudio-plugin xfce4-whiskermenu-plugin xfce4-clipman-plugin xfce4-weather-plugin xfce4-xkb-plugin adwaita-qt adwaita-qt6 engrampa xreader octoxbps menulibre xdg-desktop-portal-gtk gufw bluez blueman libspa-bluetooth"
+            SERVICES="$SERVICES dbus lightdm NetworkManager polkitd bluetoothd"
             LIGHTDM_SESSION=xfce
+            TYPE="(Base)"
         ;;
-        mate)
-            PKGS="$PKGS $XORG_PKGS lightdm lightdm-gtk3-greeter mate mate-extra gnome-keyring network-manager-applet gvfs-afc gvfs-mtp gvfs-smb udisks2 firefox"
-            SERVICES="$SERVICES dbus lightdm NetworkManager polkitd"
-            LIGHTDM_SESSION=mate
+        void-desktop-lite)
+            PKGS="$PKGS $XORG_PKGS lightdm lightdm-gtk3-greeter xfce4 gnome-themes-standard xcursor-vanilla-dmz gnome-keyring network-manager-applet gvfs-afc gvfs-mtp gvfs-smb udisks2 firefox xfce4-screenshooter greybird-themes galculator pavucontrol xfce4-pulseaudio-plugin xfce4-whiskermenu-plugin xfce4-clipman-plugin xfce4-weather-plugin xfce4-xkb-plugin adwaita-qt adwaita-qt6 engrampa xreader abiword gnumeric evolution gimp shortwave octoxbps menulibre xdg-desktop-portal-gtk gufw bluez blueman libspa-bluetooth"
+            SERVICES="$SERVICES dbus lightdm NetworkManager polkitd bluetoothd"
+            LIGHTDM_SESSION=xfce
+            TYPE="(Lite)"
         ;;
-        cinnamon)
-            PKGS="$PKGS $XORG_PKGS lightdm lightdm-gtk3-greeter cinnamon gnome-keyring colord gnome-terminal gvfs-afc gvfs-mtp gvfs-smb udisks2 firefox"
-            SERVICES="$SERVICES dbus lightdm NetworkManager polkitd"
-            LIGHTDM_SESSION=cinnamon
-        ;;
-        gnome)
-            PKGS="$PKGS $XORG_PKGS gnome firefox"
-            SERVICES="$SERVICES dbus gdm NetworkManager polkitd"
-        ;;
-        kde)
-            PKGS="$PKGS $XORG_PKGS kde5 konsole firefox dolphin NetworkManager"
-            SERVICES="$SERVICES dbus NetworkManager sddm"
-        ;;
-        lxde)
-            PKGS="$PKGS $XORG_PKGS lxde lightdm lightdm-gtk3-greeter gvfs-afc gvfs-mtp gvfs-smb udisks2 firefox"
-            SERVICES="$SERVICES acpid dbus dhcpcd wpa_supplicant lightdm polkitd"
-            LIGHTDM_SESSION=LXDE
-        ;;
-        lxqt)
-            PKGS="$PKGS $XORG_PKGS lxqt sddm gvfs-afc gvfs-mtp gvfs-smb udisks2 firefox"
-            SERVICES="$SERVICES dbus dhcpcd wpa_supplicant sddm polkitd"
+        void-desktop-full)
+            PKGS="$PKGS $XORG_PKGS lightdm lightdm-gtk3-greeter xfce4 gnome-themes-standard xcursor-vanilla-dmz gnome-keyring network-manager-applet gvfs-afc gvfs-mtp gvfs-smb udisks2 firefox xfce4-screenshooter greybird-themes galculator pavucontrol xfce4-pulseaudio-plugin xfce4-whiskermenu-plugin xfce4-clipman-plugin xfce4-weather-plugin xfce4-xkb-plugin adwaita-qt adwaita-qt6 engrampa xreader libreoffice thunderbird keepassxc gimp inkscape ssr kdenlive shortwave aisleriot quadrapassel gnome-mahjongg gnome-mines gnome-chess gnome-sudoku iagno octoxbps menulibre xdg-desktop-portal-gtk gufw bluez blueman libspa-bluetooth"
+            SERVICES="$SERVICES dbus lightdm NetworkManager polkitd bluetoothd"
+            LIGHTDM_SESSION=xfce
+            TYPE="(Full)"
         ;;
         *)
             >&2 echo "Unknown variant $variant"
@@ -141,7 +125,7 @@ EOF
         setup_pipewire
     fi
 
-    ./mklive.sh -a "$ARCH" -o "$IMG" -p "$PKGS" -S "$SERVICES" -I "$INCLUDEDIR" ${REPO} "$@"
+    ./mklive.sh -T "Void Desktop $TYPE" -a "$ARCH" -o "$IMG" -p "$PKGS" -S "$SERVICES" -I "$INCLUDEDIR" ${REPO} "$@"
 
 	cleanup
 }

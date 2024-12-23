@@ -96,7 +96,7 @@ WIDGET_SIZE="10 70"
 DIALOG() {
     rm -f $ANSWER
     dialog --colors --keep-tite --no-shadow --no-mouse \
-        --backtitle "${BOLD}${WHITE}Void Linux installation -- https://www.voidlinux.org (@@MKLIVE_VERSION@@)${RESET}" \
+        --backtitle "${BOLD}${WHITE}Void Desktop installation (@@MKLIVE_VERSION@@)${RESET}" \
         --cancel-label "Back" --aspect 20 "$@" 2>$ANSWER
     return $?
 }
@@ -104,7 +104,7 @@ DIALOG() {
 INFOBOX() {
     # Note: dialog --infobox and --keep-tite don't work together
     dialog --colors --no-shadow --no-mouse \
-        --backtitle "${BOLD}${WHITE}Void Linux installation -- https://www.voidlinux.org (@@MKLIVE_VERSION@@)${RESET}" \
+        --backtitle "${BOLD}${WHITE}Void Desktop installation (@@MKLIVE_VERSION@@)${RESET}" \
         --title "${TITLE}" --aspect 20 --infobox "$@"
 }
 
@@ -506,19 +506,17 @@ menu_partitions() {
 
             DIALOG --title "Modify Partition Table on $device" --msgbox "\n
 ${BOLD}${software} will be executed in disk $device.${RESET}\n\n
-For BIOS systems, MBR or GPT partition tables are supported. To use GPT\n
-on PC BIOS systems, an empty partition of 1MB must be added at the first\n
-2GB of the disk with the partition type \`BIOS Boot'.\n
+For BIOS systems, MBR or GPT partition tables are supported.\n
+To use GPT on PC BIOS systems an empty partition of 1MB must be added\n
+at the first 2GB of the disk with the TOGGLE \`bios_grub' enabled.\n
 ${BOLD}NOTE: you don't need this on EFI systems.${RESET}\n\n
-For EFI systems, GPT is mandatory and a FAT32 partition with at least 100MB\n
-must be created with the partition type \`EFI System'. This will be used as\n
-the EFI System Partition. This partition must have the mountpoint \`/boot/efi'.\n\n
-At least 1 partition is required for the rootfs (/). For this partition,\n
-at least 2GB is required, but more is recommended. The rootfs partition\n
-should have the partition type \`Linux Filesystem'. For swap, RAM*2\n
-should be enough and the partition type \`Linux swap' should be used.\n\n
+For EFI systems GPT is mandatory and a FAT32 partition with at least\n
+100MB must be created with the TOGGLE \`boot', this will be used as\n
+EFI System Partition. This partition must have mountpoint as \`/boot/efi'.\n\n
+At least 1 partition is required for the rootfs (/).\n
+For swap, RAM*2 must be really enough. For / 600MB are required.\n\n
 ${BOLD}WARNING: /usr is not supported as a separate partition.${RESET}\n
-${RESET}\n" 23 80
+${RESET}\n" 18 80
             if [ $? -eq 0 ]; then
                 while true; do
                     clear; $software $device; PARTITIONS_DONE=1
@@ -746,7 +744,7 @@ menu_useraccount() {
         fi
     done
 
-    _groups="wheel,audio,video,floppy,cdrom,optical,kvm,users,xbuilder"
+    _groups="wheel,audio,video,floppy,cdrom,optical,kvm,xbuilder"
     while true; do
         _desc="Select group membership for login '$(get_option USERLOGIN)':"
         for _group in $(cat /etc/group); do
@@ -759,7 +757,7 @@ menu_useraccount() {
                 _status=on
             fi
             # ignore the groups of root, existing users, and package groups
-            if [[ "${_gid}" -ge 1000 || "${_group}" = "_"* || "${_group}" =~ ^(root|nogroup|chrony|dbus|lightdm|polkitd)$ ]]; then
+            if [[ "${_gid}" -ge 1000 || "${_group}" = "_"* || "${_group}" = "root" ]]; then
                 continue
             fi
             if [ -z "${_checklist}" ]; then
@@ -1221,16 +1219,14 @@ copy_rootfs() {
 install_packages() {
     local _grub= _syspkg=
 
-    if [ "$(get_option BOOTLOADER)" != none ]; then
-        if [ -n "$EFI_SYSTEM" ]; then
-            if [ $EFI_FW_BITS -eq 32 ]; then
-                _grub="grub-i386-efi"
-            else
-                _grub="grub-x86_64-efi"
-            fi
+    if [ -n "$EFI_SYSTEM" ]; then
+        if [ $EFI_FW_BITS -eq 32 ]; then
+            _grub="grub-i386-efi"
         else
-            _grub="grub"
+            _grub="grub-x86_64-efi"
         fi
+    else
+        _grub="grub"
     fi
 
     _syspkg="base-system"
@@ -1254,11 +1250,7 @@ install_packages() {
         DIE 1
     fi
     xbps-reconfigure -r $TARGETDIR -f base-files >/dev/null 2>&1
-    stdbuf -oL chroot $TARGETDIR xbps-reconfigure -a 2>&1 | \
-        DIALOG --title "Configuring base system packages..." --programbox 24 80
-    if [ $? -ne 0 ]; then
-        DIE 1
-    fi
+    chroot $TARGETDIR xbps-reconfigure -a
 }
 
 enable_service() {
@@ -1332,7 +1324,7 @@ ${BOLD}Do you want to continue?${RESET}" 20 80 || return
         chroot $TARGETDIR dracut --no-hostonly --add-drivers "ahci" --force >>$LOG 2>&1
         INFOBOX "Removing temporary packages from target ..." 4 60
         echo "Removing temporary packages from target ..." >$LOG
-        TO_REMOVE="dialog xtools-minimal xmirror"
+        TO_REMOVE="dialog xtools-minimal xmirror gparted"
         # only remove espeakup and brltty if it wasn't enabled in the live environment
         if ! [ -e "/var/service/espeakup" ]; then
             TO_REMOVE+=" espeakup"
@@ -1340,13 +1332,7 @@ ${BOLD}Do you want to continue?${RESET}" 20 80 || return
         if ! [ -e "/var/service/brltty" ]; then
             TO_REMOVE+=" brltty"
         fi
-        if [ "$(get_option BOOTLOADER)" = none ]; then
-            TO_REMOVE+=" grub-x86_64-efi grub-i386-efi grub"
-        fi
-        # uninstall separately to minimise errors
-        for pkg in $TO_REMOVE; do
-            xbps-remove -r $TARGETDIR -Ry "$pkg" >>$LOG 2>&1
-        done
+        xbps-remove -r $TARGETDIR -Ry $TO_REMOVE >>$LOG 2>&1
         rmdir $TARGETDIR/mnt/target
     else
         # mount required fs
@@ -1433,7 +1419,7 @@ ${BOLD}Do you want to continue?${RESET}" 20 80 || return
     umount_filesystems
 
     # installed successfully.
-    DIALOG --yesno "${BOLD}Void Linux has been installed successfully!${RESET}\n
+    DIALOG --yesno "${BOLD}Installation completed successfully!${RESET}\n
 Do you want to reboot the system?" ${YESNOSIZE}
     if [ $? -eq 0 ]; then
         shutdown -r now
@@ -1445,10 +1431,10 @@ Do you want to reboot the system?" ${YESNOSIZE}
 menu_source() {
     local src=
 
-    DIALOG --title " Select installation source " \
+    DIALOG --title " Select installation type " \
         --menu "$MENULABEL" 8 70 0 \
-        "Local" "Packages from ISO image" \
-        "Network" "Base system only, downloaded from official repository"
+        "Local" "Void Desktop configuration" \
+        "Network" "Basic Void Linux configuration"
     case "$(cat $ANSWER)" in
         "Local") src="local";;
         "Network") src="net";
@@ -1477,7 +1463,7 @@ menu() {
         AFTER_HOSTNAME="Timezone"
         DIALOG --default-item $DEFITEM \
             --extra-button --extra-label "Settings" \
-            --title " Void Linux installation menu " \
+            --title " Void Desktop installation menu " \
             --menu "$MENULABEL" 10 70 0 \
             "Keyboard" "Set system keyboard" \
             "Network" "Set up the network" \
@@ -1496,7 +1482,7 @@ menu() {
         AFTER_HOSTNAME="Locale"
         DIALOG --default-item $DEFITEM \
             --extra-button --extra-label "Settings" \
-            --title " Void Linux installation menu " \
+            --title " Void Desktop installation menu " \
             --menu "$MENULABEL" 10 70 0 \
             "Keyboard" "Set system keyboard" \
             "Network" "Set up the network" \
@@ -1558,12 +1544,13 @@ fi
 # main()
 #
 DIALOG --title "${BOLD}${RED} Enter the void ... ${RESET}" --msgbox "\n
-Welcome to the Void Linux installation. A simple and minimal \
-Linux distribution made from scratch and built from the source package tree \
-available for XBPS, a new alternative binary package system.\n\n
-The installation should be pretty straightforward. If you are in trouble \
-please join us at ${BOLD}#voidlinux${RESET} on ${BOLD}irc.libera.chat${RESET}.\n\n
-${BOLD}https://www.voidlinux.org${RESET}\n\n" 16 80
+Welcome to the Void Desktop installation. A simple modification of \
+the Void Linux distribution packaged with the XFCE desktop and pre-installed software \
+to get you started with using Void Linux.\n\n
+Depending on which type of ISO you picked, the software selection will be different. \
+Check the Void Desktop website for more information on pre-installed software.\n\n
+The installation should be pretty straightforward. If you encounter any issues, \
+open a issue on ${BOLD}https://github.com/canofjuice/void-desktop-mklive${RESET}.\n\n" 16 80 
 
 while true; do
     menu

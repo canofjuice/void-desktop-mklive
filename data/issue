@@ -1,16 +1,20 @@
 ###############################################################################
 
-Welcome to the Void Linux Live system. Two users are available to log in:
+Welcome to the Void Desktop Live system. 
 
-	- root:voidlinux
-	- anon:voidlinux
+The live desktop should launch at any moment.
+
+In case it doesn't, two users are available to log in for troubleshooting:
+
+	- root
+	- anon
 
 The `anon` user additionally has `sudo(8)` permissions to run any command
 without a password.
 
-To start the installation please type:
+To start the installation, open a terminal and run:
 
-    # void-installer
+    `sudo void-installer`
 
 and follow the on-screen instructions. To install additional software make
 sure to configure your network interface and then use:
@@ -21,8 +25,13 @@ sure to configure your network interface and then use:
 The Void Linux Handbook is also available for offline access in multiple
 formats, and can be accessed with the `void-docs(1)` utility.
 
-Thanks for using Void Linux.
+Additionally, you may find extra documentation related to Void Desktop at:
 
+`https://github.com/canofjuice/void-desktop-mklive/wiki`
+
+Thanks for trying out Void Desktop and cheers to the Void Linux developers for making an awesome linux distribution!
+
+    https://www.github.com/canofjuice/void-desktop-mklive
     https://www.voidlinux.org
 
 ###############################################################################
