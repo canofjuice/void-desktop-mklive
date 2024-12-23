@@ -1,0 +1,27 @@
+#!/bin/bash
+
+HEIGHT=7
+WIDTH=90
+BACKTITLE="Flatpak support installation"
+TITLE="Install Flatpak"
+YESNO="\nProceed with the installation?"
+
+	dialog --clear \
+		--backtitle "$BACKTITLE" \
+		--title "$TITLE" \
+		--yesno "$YESNO" \
+		$HEIGHT $WIDTH \
+		2>&1 >/dev/tty
+response=$?
+case $response in
+				0) dialog --clear  --backtitle "$BACKTITLE"  --title "Warehouse question" --yesno "\nWould you like to install a graphical application for managing Flatpaks?" $HEIGHT $WIDTH 
+						response1=$?
+						case $response1 in
+							0)
+								clear ; sudo xbps-install flatpak -y ; sudo flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo ; flatpak install io.github.flattool.Warehouse -y ; clear ; echo "Done! Exiting in 3 seconds." ; sleep 3s ; exit ;; 
+							1)
+								clear ; sudo xbps-install flatpak -y ; sudo flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo ; clear ; echo "Done! Exiting in 3 seconds." ; sleep 3s ; exit ;; 
+						esac
+				;;
+				1) clear ; echo "Cancelled! Exiting in 3 seconds." ; sleep 3s ; exit ;;
+esac

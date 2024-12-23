@@ -1,0 +1,13 @@
+[Desktop Entry]
+Version=1.1
+Type=Application
+Name=Void Desktop Setup Utility
+Comment=Post-installation setup utility.
+Icon=driver-manager
+Exec=vd-setup-utility
+Terminal=true
+Actions=
+Categories=System;
+Path=
+StartupNotify=true
+GenericName=Install NVIDIA drivers for your Graphics Card.

@@ -1,0 +1,7 @@
+#
+# This file is parsed by pam_env module
+#
+# Syntax: simple "KEY=VAL" pairs on separate lines
+#
+QT_STYLE_OVERRIDE=adwaita-dark
+XCURSOR_THEME=Vanilla-DMZ
