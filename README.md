@@ -8,11 +8,11 @@
 
 ![XFCE Desktop](media/xfce.png)
 
+![KDE Desktop](media/kde.png)
+
 ## How to use
 
 Make sure you're using Void Linux. Clone the repository, run `setup-repo.rsh` ***ONLY ONCE!***
 
-Run `sudo ./mkiso.sh -b cinnamon` to create a ISO of the Cinnamon variant, or `sudo ./mkiso.sh -b xfce` to create a ISO of the XFCE variant.
+Run `sudo ./mkiso.sh -b cinnamon` to create a ISO of the Cinnamon variant, `sudo ./mkiso.sh -b xfce` to create a ISO of the XFCE variant or `sudo ./mkiso.sh -b xfce` to create a ISO of the KDE variant.
 
-> [!NOTE]
-> KDE variant present but unfinished. Will be setup later.
