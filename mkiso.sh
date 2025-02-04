@@ -20,8 +20,7 @@ usage() {
 
 	OPTIONS
 	 -a <arch>     Set architecture (or platform) in the image
-	 -b <variant>  One of base, enlightenment, xfce, mate, cinnamon, gnome, kde,
-	               lxde, lxqt, or xfce-wayland (default: base). May be specified multiple times
+	 -b <variant>  One of xfce, cinnamon, kde. May be specified multiple times
 	               to build multiple variants
 	 -d <date>     Override the datestamp on the generated image (YYYYMMDD format)
 	 -t <arch-date-variant>
@@ -129,8 +128,9 @@ build_variant() {
     WAYLAND_PKGS="$GFX_WL_PKGS $FONTS orca"
     XORG_PKGS="$GFX_PKGS $FONTS xorg-minimal xorg-input-drivers setxkbmap xauth orca octoxbps xdg-user-dirs"
     SERVICES="chronyd ufw acpid bluetoothd cupsd"
-    CINNAMON_PKGS="plata-theme papirus-icon-theme breeze-snow-cursor-theme leafpad parole rhythmbox io.elementary.calculator thunderbird libreoffice engrampa fontmanager xreader xfce4-taskmanager gnome-disk-utility gufw ristretto gimp xdg-desktop-portal-gtk blueman system-config-printer system-config-printer-udev gnome-screenshot"
-    XFCE_PKGS="plata-theme papirus-icon-theme breeze-snow-cursor-theme io.elementary.calculator thunderbird libreoffice engrampa fontmanager xreader xfce4-taskmanager gnome-disk-utility gufw gimp xdg-desktop-portal-gtk blueman system-config-printer system-config-printer-udev xfce4-screenshooter"
+    CINNAMON_PKGS="ffmpegthumbnailer plata-theme papirus-icon-theme breeze-snow-cursor-theme leafpad parole rhythmbox io.elementary.calculator thunderbird libreoffice engrampa fontmanager xreader xfce4-taskmanager gnome-disk-utility gufw ristretto gimp xdg-desktop-portal-gtk blueman system-config-printer system-config-printer-udev gnome-screenshot"
+    XFCE_PKGS="ffmpegthumbnailer plata-theme papirus-icon-theme breeze-snow-cursor-theme io.elementary.calculator thunderbird libreoffice engrampa fontmanager xreader xfce4-taskmanager gnome-disk-utility gufw gimp xdg-desktop-portal-gtk blueman system-config-printer system-config-printer-udev xfce4-screenshooter"
+    KDE_PKGS="kdegraphics-thumbnailers ffmpegthumbs kwrite okular gwenview ark plasma-systemmonitor spectacle kcalc partitionmanager vlc libreoffice gimp thunderbird plasma-firewall"
     LIGHTDM_SESSION=''
 
     case $variant in
@@ -153,7 +153,7 @@ build_variant() {
             LIGHTDM_SESSION=cinnamon
         ;;
         kde)
-            PKGS="$PKGS $XORG_PKGS kde5 konsole firefox dolphin NetworkManager"
+            PKGS="$PKGS $XORG_PKGS $KDE_PKGS kde-plasma konsole firefox dolphin NetworkManager"
             SERVICES="$SERVICES dbus NetworkManager sddm"
         ;;
         *)
@@ -189,6 +189,10 @@ EOF
         if [ "$variant" == "xfce" ]; then
             cp -rf include_xfce/etc $INCLUDEDIR/
             cp -rf include_xfce/usr $INCLUDEDIR/
+        fi
+        if [ "$variant" == "kde" ]; then
+            cp -rf include_kde/etc $INCLUDEDIR/
+            cp -rf include_kde/usr $INCLUDEDIR/
         fi
     fi
 
