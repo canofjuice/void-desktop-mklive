@@ -1,5 +1,6 @@
 #!/bin/bash
 
+find . -name '*.sh' | xargs chmod +x
 rm -r include_cinnamon/etc/skel/.config
 rm -r include_xfce/etc/skel/.config
 mv include_cinnamon/etc/skel/config include_cinnamon/etc/skel/.config
